@@ -4,7 +4,8 @@
 
 #### This Project's Goal is to Apply Action Recognition with Multi GPU and TensorRT.
 
----
+<br></br>
+
 ## Configuration
 
 #### The configuration is as follows  
@@ -12,9 +13,9 @@
 #### 2. visualization : we offer visualization of confidence score map which is input of posec3d
 #### 3. inference : we offer demo, inference on single gpu, inference on multi gpu with tensorRT and Flask
 
-<br></br>
 > #### we modify and custom mmaction2, mmpose, mmdetection project's some part about detection target to use the tensorRT and multi gpu.   
----
+<br></br>
+
 ## Result
 
 #### 1) Visualization of Confidence Map with visualization/get_confmap.py
