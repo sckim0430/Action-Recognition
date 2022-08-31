@@ -1,20 +1,17 @@
 # Action Recognition
 
 #### It is revealed that this project is based on [Open MMProject](https://github.com/open-mmlab).
-
 #### This Project's Goal is to Apply Action Recognition with Multi GPU and TensorRT.
-
 <br></br>
 
 ## Configuration
 
-#### The configuration is as follows  
-#### 1. preprocessing : we offer merge dataset(pkl file) function
-#### 2. visualization : we offer visualization of confidence score map which is input of posec3d
-#### 3. inference : we offer demo, inference on single gpu, inference on multi gpu with tensorRT and Flask
-
-> #### we modify and custom mmaction2, mmpose, mmdetection project's some part about detection target to use the tensorRT and multi gpu.   
+The configuration is as follows  
+1. preprocessing : we offer merge dataset(pkl file) function
+2. visualization : we offer visualization of confidence score map which is input of posec3d
+3. inference : we offer demo, inference on single gpu, inference on multi gpu with tensorRT and Flask
 <br></br>
+> #### we modify and custom mmaction2, mmpose, mmdetection project's some part about detection target to use the tensorRT and multi gpu.   
 
 ## Result
 
