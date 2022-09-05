@@ -17,32 +17,32 @@ test_path = '/home/sckim/sckim/3.project/9.Action_Recognition/quantom/data/pkl/t
 ntu_path = '/home/sckim/sckim/3.project/9.Action_Recognition/quantom/data/pkl/ntu120_xsub_train.pkl'
 
 # Load Open Dataset and Custom Dataset PKL File
-with open(custom_train_path,'rb') as f:
+with open(custom_train_path, 'rb') as f:
     custom_train_data = pickle.load(f)
 f.close()
 
-with open(custom_val_path,'rb') as f:
+with open(custom_val_path, 'rb') as f:
     custom_val_data = pickle.load(f)
 f.close()
 
-with open(custom_test_path,'rb') as f:
+with open(custom_test_path, 'rb') as f:
     custom_test_data = pickle.load(f)
 f.close()
 
-with open(train_path,'rb') as f:
+with open(train_path, 'rb') as f:
     train_data = pickle.load(f)
 f.close()
 
-with open(val_path,'rb') as f:
+with open(val_path, 'rb') as f:
     val_data = pickle.load(f)
 f.close()
 
-with open(test_path,'rb') as f:
+with open(test_path, 'rb') as f:
     test_data = pickle.load(f)
 f.close()
 
 # Ntu PKL File which have Not Falling Label will be append to Total Dataset PKL File
-with open(ntu_path,'rb') as f:
+with open(ntu_path, 'rb') as f:
     ntu_data = pickle.load(f)
 f.close()
 
@@ -66,15 +66,15 @@ neg_data_num = 0
 
 for d in train_data:
     if not d["label"]:
-        total_neg_data_num+=1
+        total_neg_data_num += 1
 
 for d in val_data:
     if not d["label"]:
-        total_neg_data_num+=1
+        total_neg_data_num += 1
 
 for d in test_data:
     if not d["label"]:
-        total_neg_data_num+=1
+        total_neg_data_num += 1
 
 # To avoid class imbalance problem, So We Calculate Each Label Num with Divide Num of Falling Label to 119
 len_positive = len(data)
@@ -85,19 +85,19 @@ data_neg = []
 
 # Append the Not Falling Label Data
 for idx, ntu in enumerate(ntu_data):
-    if ntu["label"]==42:
-        continue
-    
-    if neg_data_num<=total_neg_data_num and num_array[ntu["label"]]>=each_num:
-        neg_data_num+=1
+    if ntu["label"] == 42:
         continue
 
-    num_array[ntu["label"]]+=1
-    ntu["label"]=0
-    ntu["frame_dir"]=ntu["frame_dir"].split('A')[0]+'A001'
+    if neg_data_num <= total_neg_data_num and num_array[ntu["label"]] >= each_num:
+        neg_data_num += 1
+        continue
+
+    num_array[ntu["label"]] += 1
+    ntu["label"] = 0
+    ntu["frame_dir"] = ntu["frame_dir"].split('A')[0]+'A001'
     data_neg.append(ntu)
 
-    if np.sum(num_array)>=len_positive:
+    if np.sum(num_array) >= len_positive:
         break
 
 # Shuffle Data
@@ -139,16 +139,16 @@ train_path = '/home/sckim/sckim/3.project/9.Action_Recognition/quantom/data/pkl/
 val_path = '/home/sckim/sckim/3.project/9.Action_Recognition/quantom/data/pkl/total_set_pkl/total_val.pkl'
 test_path = '/home/sckim/sckim/3.project/9.Action_Recognition/quantom/data/pkl/total_set_pkl/total_test.pkl'
 
-with open(train_path,"wb") as f:
-    pickle.dump(total_train,f,protocol=pickle.HIGHEST_PROTOCOL)
+with open(train_path, "wb") as f:
+    pickle.dump(total_train, f, protocol=pickle.HIGHEST_PROTOCOL)
 f.close()
 
-with open(val_path,"wb") as f:
-    pickle.dump(total_val,f,protocol=pickle.HIGHEST_PROTOCOL)
+with open(val_path, "wb") as f:
+    pickle.dump(total_val, f, protocol=pickle.HIGHEST_PROTOCOL)
 f.close()
 
-with open(test_path,"wb") as f:
-    pickle.dump(total_test,f,protocol=pickle.HIGHEST_PROTOCOL)
+with open(test_path, "wb") as f:
+    pickle.dump(total_test, f, protocol=pickle.HIGHEST_PROTOCOL)
 f.close()
 
 print("done")

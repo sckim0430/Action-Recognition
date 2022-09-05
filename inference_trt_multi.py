@@ -8,7 +8,7 @@ import glob
 import torch
 import torch.multiprocessing as mp
 import torch.distributed as dist
-from torch.utils.data import DataLoader,DistributedSampler
+from torch.utils.data import DataLoader, DistributedSampler
 import cv2
 import numpy as np
 
@@ -16,11 +16,10 @@ import mmcv
 from mmcv import DictAction
 from mmdet.apis import inference_detector
 from mmpose.apis import (inference_top_down_pose_model)
-from mmaction.apis import inference_recognizer_i,init_recognizer
+from mmaction.apis import inference_recognizer_i, init_recognizer
 from mmaction.datasets.pipelines import UniformSampleFrames
 from mmdeploy.apis import build_task_processor
 from mmdeploy.utils.config_utils import load_config
-
 
 
 def parse_args():
@@ -59,9 +58,9 @@ def parse_args():
         help='human pose estimation config file path (from mmpose)')
 
     parser.add_argument(
-    '--pose-deploy-config',
-    default='../mmdeploy/configs/mmpose/pose-detection_tensorrt-fp16_static-256x192.py',
-    help='human det deploy config file path (from mmdetection)')
+        '--pose-deploy-config',
+        default='../mmdeploy/configs/mmpose/pose-detection_tensorrt-fp16_static-256x192.py',
+        help='human det deploy config file path (from mmdetection)')
 
     parser.add_argument(
         '--pose-checkpoint',
@@ -78,7 +77,7 @@ def parse_args():
         '--skeleton-checkpoint',
         default='./work_dirs/local/slowonly_r50_u48_240e_ntu120_xsub_keypoint/epoch_1.pth',
         help='skeleton-based action recognition checkpoint file/url')
-    
+
     parser.add_argument(
         '--skeleton-score-thr',
         type=float,
@@ -118,6 +117,7 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+
 def frame_extraction(video_path):
     """Extract frames given video_name.
 
@@ -126,22 +126,23 @@ def frame_extraction(video_path):
     Returns:
         np.ndarray : frame image array
     """
-    
+
     vid = cv2.VideoCapture(video_path)
-    
+
     frames = []
     flag, frame = vid.read()
     cnt = 0
-    
+
     while flag:
         frames.append(frame)
         cnt += 1
 
         flag, frame = vid.read()
-    
+
     return np.asarray(frames)
 
-def detection_inference_trt(args, frames, det_deploy_cfg,det_model,det_task_processor):
+
+def detection_inference_trt(args, frames, det_deploy_cfg, det_model, det_task_processor):
     """Object Detection TensorRT Inference
 
     Args:
@@ -159,17 +160,18 @@ def detection_inference_trt(args, frames, det_deploy_cfg,det_model,det_task_proc
     print('')
     print('Performing Human Detection for each frame')
 
-    frame_num = len(frames)    
+    frame_num = len(frames)
 
     prog_bar = mmcv.ProgressBar(frame_num/args.det_batch)
 
-    for batch_idx in range(0,frame_num,args.det_batch):
-        #We Modify mmdet.inference_detection function        
-        result = inference_detector(det_model,frames[batch_idx:batch_idx+args.det_batch],det_deploy_cfg=det_deploy_cfg,det_task_processor=det_task_processor)
+    for batch_idx in range(0, frame_num, args.det_batch):
+        #We Modify mmdet.inference_detection function
+        result = inference_detector(det_model, frames[batch_idx:batch_idx+args.det_batch],
+                                    det_deploy_cfg=det_deploy_cfg, det_task_processor=det_task_processor)
 
         # We only keep human detections with score larger than det_score_thr
         for _ in result:
-            det = _[0][_[0][:,4]>=args.det_score_thr]
+            det = _[0][_[0][:, 4] >= args.det_score_thr]
             results.append(det)
 
         prog_bar.update()
@@ -177,7 +179,8 @@ def detection_inference_trt(args, frames, det_deploy_cfg,det_model,det_task_proc
     print('')
     return results
 
-def pose_inference_trt(args, frames, det_results, pose_deploy_cfg, pose_model,pose_task_processor):
+
+def pose_inference_trt(args, frames, det_results, pose_deploy_cfg, pose_model, pose_task_processor):
     """Pose Estimation Inference
 
     Args:
@@ -192,16 +195,18 @@ def pose_inference_trt(args, frames, det_results, pose_deploy_cfg, pose_model,po
     """
     ret = []
     prog_bar = mmcv.ProgressBar(len(frames))
-    
+
     for f, d in zip(frames, det_results):
         # Align input format
         d = [dict(bbox=x) for x in list(d)]
-        pose = inference_top_down_pose_model(pose_model,f, d,pose_deploy_cfg=pose_deploy_cfg, pose_task_processor=pose_task_processor,bbox_limit=args.pose_batch, format='xyxy')[0]
+        pose = inference_top_down_pose_model(pose_model, f, d, pose_deploy_cfg=pose_deploy_cfg,
+                                             pose_task_processor=pose_task_processor, bbox_limit=args.pose_batch, format='xyxy')[0]
         ret.append(pose)
         prog_bar.update()
 
     print('')
     return ret
+
 
 def Run_Inference(Inference_func):
     """Multi Processing Main Function
@@ -210,18 +215,18 @@ def Run_Inference(Inference_func):
         Inference_func (function): Inference Function
     """
     args = parse_args()
-    args.gpus=torch.cuda.device_count()
-    args.det_batch=2
-    args.pose_batch=5
-    args.action_batch=1
+    args.gpus = torch.cuda.device_count()
+    args.det_batch = 2
+    args.pose_batch = 5
+    args.action_batch = 1
 
     mp.spawn(Inference_func,
-            args=(args,),
-            nprocs=args.gpus,
-            join=True)
+             args=(args,),
+             nprocs=args.gpus,
+             join=True)
 
 
-def Inference(rank,args):
+def Inference(rank, args):
     """Inference Function
 
     Args:
@@ -235,7 +240,7 @@ def Inference(rank,args):
     os.environ['MASTER_PORT'] = '12355'
 
     #Initialization of Process Group
-    dist.init_process_group(backend='nccl',rank=rank,world_size=args.gpus)
+    dist.init_process_group(backend='nccl', rank=rank, world_size=args.gpus)
 
     #Get Model Parameters
     det_deploy_cfg_path = args.det_deploy_config
@@ -243,8 +248,9 @@ def Inference(rank,args):
     pose_deploy_cfg_path = args.pose_deploy_config
     pose_cfg_path = args.pose_config
 
-    det_deploy_cfg, det_cfg = load_config(det_deploy_cfg_path,det_cfg_path)
-    pose_deploy_cfg, pose_cfg = load_config(pose_deploy_cfg_path,pose_cfg_path)
+    det_deploy_cfg, det_cfg = load_config(det_deploy_cfg_path, det_cfg_path)
+    pose_deploy_cfg, pose_cfg = load_config(
+        pose_deploy_cfg_path, pose_cfg_path)
     skeleon_cfg = mmcv.Config.fromfile(args.skeleton_config)
 
     if args.cfg_options is not None:
@@ -253,48 +259,49 @@ def Inference(rank,args):
         skeleon_cfg.merge_from_dict(args.cfg_options)
 
     for component in skeleon_cfg.data.test.pipeline:
-        if component['type'] == 'PoseNormalize': 
+        if component['type'] == 'PoseNormalize':
             component['mean'] = (w // 2, h // 2, .5)
             component['max_value'] = (w, h, 1.)
 
     is_cuda = (torch.cuda.is_available())
     assert is_cuda, ("We don't offer Cpu Mode, Please Run with Gpus")
-    
+
     device = 'cuda:'+str(rank)
 
     #Initialization of Object Detection and Pose Estimation and Action Recognition Model
-    det_task_processor = build_task_processor(det_cfg, det_deploy_cfg, device) 
+    det_task_processor = build_task_processor(det_cfg, det_deploy_cfg, device)
     det_model = det_task_processor.init_backend_model([args.det_checkpoint])
 
-    pose_task_processor = build_task_processor(pose_cfg, pose_deploy_cfg, device)
+    pose_task_processor = build_task_processor(
+        pose_cfg, pose_deploy_cfg, device)
     pose_model = pose_task_processor.init_backend_model([args.pose_checkpoint])
 
-    action_recognition_model = init_recognizer(skeleon_cfg, args.skeleton_checkpoint, device)
+    action_recognition_model = init_recognizer(
+        skeleon_cfg, args.skeleton_checkpoint, device)
 
     video_list = glob.glob(args.video_folder+'*')
-
 
     #Initialization of Data Loader and Sampler
     #We Use Distirbuted Sampler Because Our Code is Running On Multi GPU
     sampler = DistributedSampler(
         video_list,
-        num_replicas = args.gpus,
+        num_replicas=args.gpus,
         rank=rank,
         shuffle=False
     )
 
     data_loader = DataLoader(
         video_list,
-        batch_size = args.action_batch,       
+        batch_size=args.action_batch,
         num_workers=0,
-        sampler = sampler,
-        shuffle = False,
-        pin_memory = True,
+        sampler=sampler,
+        shuffle=False,
+        pin_memory=True,
     )
 
     for video_name in data_loader:
-        video_name = video_name[0]              
-        s= time.time()
+        video_name = video_name[0]
+        s = time.time()
         frames = frame_extraction(video_name)
 
         num_frame = len(frames)
@@ -302,7 +309,8 @@ def Inference(rank,args):
         h, w, _ = frames[0].shape
 
         #Apply UniformSampling
-        sampler = UniformSampleFrames(clip_len=num_time_step, num_clips=1, test_mode=True)
+        sampler = UniformSampleFrames(
+            clip_len=num_time_step, num_clips=1, test_mode=True)
         results = dict(total_frames=num_frame, start_index=0)
         sampling_results = sampler(results)
 
@@ -311,22 +319,24 @@ def Inference(rank,args):
         start_time = time.time()
 
         #Get Object Detection and Pose Estimation Results
-        det_results = detection_inference_trt(args,frames[sampling_results['frame_inds']],det_deploy_cfg,det_model,det_task_processor)
-        pose_results = pose_inference_trt(args,frames[sampling_results['frame_inds']],det_results, pose_deploy_cfg, pose_model, pose_task_processor)
-        
+        det_results = detection_inference_trt(
+            args, frames[sampling_results['frame_inds']], det_deploy_cfg, det_model, det_task_processor)
+        pose_results = pose_inference_trt(
+            args, frames[sampling_results['frame_inds']], det_results, pose_deploy_cfg, pose_model, pose_task_processor)
+
         #Generate Action Recognition Input Format
         persons = [len(x) for x in det_results]
         num_person = max(persons) if len(persons) else 0
         num_keypoint = 17
 
         fake_anno = dict(
-        frame_dir='',
-        label=-1,
-        img_shape=(h, w),
-        original_shape=(h, w),
-        start_index=0,
-        modality='Pose',
-        total_frames=num_time_step)
+            frame_dir='',
+            label=-1,
+            img_shape=(h, w),
+            original_shape=(h, w),
+            start_index=0,
+            modality='Pose',
+            total_frames=num_time_step)
 
         fake_anno['frame_inds'] = np.array(range(num_time_step))
         fake_anno['clip_len'] = sampling_results['clip_len']
@@ -336,8 +346,8 @@ def Inference(rank,args):
         keypoint = np.zeros((num_person, num_frame, num_keypoint, 2),
                             dtype=np.float16)
         keypoint_score = np.zeros((num_person, num_frame, num_keypoint),
-                                dtype=np.float16)
-                                
+                                  dtype=np.float16)
+
         for i, poses in enumerate(pose_results):
             for j, pose in enumerate(poses):
                 pose = pose['keypoints']
@@ -348,13 +358,16 @@ def Inference(rank,args):
         fake_anno['keypoint_score'] = keypoint_score
 
         #Get Action Recognition Result
-        result = inference_recognizer_i(action_recognition_model, fake_anno,samples_per_gpu=args.action_batch)[0][1]
+        result = inference_recognizer_i(
+            action_recognition_model, fake_anno, samples_per_gpu=args.action_batch)[0][1]
 
         end_time = time.time()
         print()
-        print('cost time : {}'.format(end_time-start_time))        
-        print('{} action recognition score : {}'.format(video_name,result))
-        print('{} action recognition result : {}'.format(video_name, 1 if result>=args.skeleton_score_thr else 0))
+        print('cost time : {}'.format(end_time-start_time))
+        print('{} action recognition score : {}'.format(video_name, result))
+        print('{} action recognition result : {}'.format(
+            video_name, 1 if result >= args.skeleton_score_thr else 0))
+
 
 if __name__ == "__main__":
     Run_Inference(Inference)

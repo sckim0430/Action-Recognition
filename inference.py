@@ -12,10 +12,11 @@ import numpy as np
 
 import mmcv
 from mmcv import DictAction
-from mmaction.apis import inference_recognizer_i,init_recognizer
+from mmaction.apis import inference_recognizer_i, init_recognizer
 from mmaction.datasets.pipelines import UniformSampleFrames
 from mmdet.apis import inference_detector, init_detector
 from mmpose.apis import (inference_top_down_pose_model, init_pose_model)
+
 
 def parse_args():
     """Generate Arguments
@@ -60,7 +61,7 @@ def parse_args():
         '--skeleton-checkpoint',
         default='./work_dirs/local/slowonly_r50_u48_240e_ntu120_xsub_keypoint/epoch_1.pth',
         help='skeleton-based action recognition checkpoint file/url')
-    
+
     parser.add_argument(
         '--action-score-thr',
         type=float,
@@ -74,7 +75,7 @@ def parse_args():
         '--video_folder',
         default='../../data/Video/',
         help='video folder path')
-              
+
     parser.add_argument(
         '--cfg-options',
         nargs='+',
@@ -87,6 +88,7 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+
 def frame_extraction(video_path):
     """Extract frames given video_name.
 
@@ -95,20 +97,21 @@ def frame_extraction(video_path):
     Returns:
         np.ndarray : frame image array
     """
-    
+
     vid = cv2.VideoCapture(video_path)
-    
+
     frames = []
     flag, frame = vid.read()
     cnt = 0
-    
+
     while flag:
         frames.append(frame)
         cnt += 1
 
         flag, frame = vid.read()
-    
+
     return np.asarray(frames)
+
 
 def detection_inference(args, frames, det_model):
     """Object Detection Inference
@@ -123,7 +126,7 @@ def detection_inference(args, frames, det_model):
     """
 
     assert det_model.CLASSES[0] == 'person', ('We require you to use a detector '
-                                          'trained on COCO')
+                                              'trained on COCO')
     results = []
 
     print('')
@@ -133,15 +136,16 @@ def detection_inference(args, frames, det_model):
     for frame in frames:
         result = inference_detector(det_model, frame)
 
-        for idx,_ in enumerate(result):
-            det = _[0][_[0][:,4]>=args.det_score_thr]
+        for idx, _ in enumerate(result):
+            det = _[0][_[0][:, 4] >= args.det_score_thr]
             results.append(det)
-        
+
         prog_bar.update()
-    
+
     return results
 
-def pose_inference(frames, det_results,pose_model):
+
+def pose_inference(frames, det_results, pose_model):
     """Pose Estimation Inference
 
     Args:
@@ -154,17 +158,19 @@ def pose_inference(frames, det_results,pose_model):
     """
     print('')
     print('Performing Human Pose Estimation for each frame')
-    
+
     ret = []
     prog_bar = mmcv.ProgressBar(len(frames))
-    
+
     for f, d in zip(frames, det_results):
         # Align input format
         d = [dict(bbox=x) for x in list(d)]
-        pose = inference_top_down_pose_model(pose_model, f, d, format='xyxy')[0]
+        pose = inference_top_down_pose_model(
+            pose_model, f, d, format='xyxy')[0]
         ret.append(pose)
         prog_bar.update()
     return ret
+
 
 def main():
     args = parse_args()
@@ -177,21 +183,25 @@ def main():
         if component['type'] == 'PoseNormalize':
             component['mean'] = (w // 2, h // 2, .5)
             component['max_value'] = (w, h, 1.)
-    
+
     #Initialization of Object Detection,Pose Estimation, Action Recognition Model
-    pose_model = init_pose_model(args.pose_config, args.pose_checkpoint, args.device)
-    action_recognition_model = init_recognizer(config, args.skeleton_checkpoint, args.device)
-    det_model = init_detector(args.det_config, args.det_checkpoint,args.device)
-    
+    pose_model = init_pose_model(
+        args.pose_config, args.pose_checkpoint, args.device)
+    action_recognition_model = init_recognizer(
+        config, args.skeleton_checkpoint, args.device)
+    det_model = init_detector(
+        args.det_config, args.det_checkpoint, args.device)
+
     for video_name in os.listdir(args.video_folder):
         #Get Frames from Video
-        frames = frame_extraction(osp.join(args.video_folder,video_name))
+        frames = frame_extraction(osp.join(args.video_folder, video_name))
         num_frame = len(frames)
         num_time_step = 48
         h, w, _ = frames[0].shape
 
         #Apply UniformSampling
-        sampler = UniformSampleFrames(clip_len=num_time_step, num_clips=1, test_mode=True)
+        sampler = UniformSampleFrames(
+            clip_len=num_time_step, num_clips=1, test_mode=True)
         results = dict(total_frames=num_frame, start_index=0)
         sampling_results = sampler(results)
 
@@ -201,22 +211,24 @@ def main():
         start_time = time.time()
 
         #Get Object Detection and Pose Estimation Results
-        det_results = detection_inference(args,frames[sampling_results['frame_inds']],det_model)
-        pose_results = pose_inference(frames[sampling_results['frame_inds']],det_results,pose_model)
-        
+        det_results = detection_inference(
+            args, frames[sampling_results['frame_inds']], det_model)
+        pose_results = pose_inference(
+            frames[sampling_results['frame_inds']], det_results, pose_model)
+
         #Generate Action Recognition Input Format
         persons = [len(x) for x in det_results]
         num_person = max(persons) if len(persons) else 0
         num_keypoint = 17
 
         fake_anno = dict(
-        frame_dir='',
-        label=-1,
-        img_shape=(h, w),
-        original_shape=(h, w),
-        start_index=0,
-        modality='Pose',
-        total_frames=num_time_step)
+            frame_dir='',
+            label=-1,
+            img_shape=(h, w),
+            original_shape=(h, w),
+            start_index=0,
+            modality='Pose',
+            total_frames=num_time_step)
 
         fake_anno['frame_inds'] = np.array(range(num_time_step))
         fake_anno['clip_len'] = sampling_results['clip_len']
@@ -226,7 +238,7 @@ def main():
         keypoint = np.zeros((num_person, num_time_step, num_keypoint, 2),
                             dtype=np.float16)
         keypoint_score = np.zeros((num_person, num_time_step, num_keypoint),
-                            dtype=np.float16)
+                                  dtype=np.float16)
 
         for i, poses in enumerate(pose_results):
             for j, pose in enumerate(poses):
@@ -237,16 +249,17 @@ def main():
         fake_anno['keypoint'] = keypoint
         fake_anno['keypoint_score'] = keypoint_score
 
-
         #Get Action Recognition Result
-        result = inference_recognizer_i(action_recognition_model, fake_anno,samples_per_gpu=1)[0][1]
-        
+        result = inference_recognizer_i(
+            action_recognition_model, fake_anno, samples_per_gpu=1)[0][1]
+
         #Get End time
         end_time = time.time()
         print()
         print('cost time : {}'.format(end_time-start_time))
-        print('{} action recognition score : {}'.format(video_name,result))
-        print('{} action recognition result : {}'.format(video_name, 1 if result>=args.action_score_thr else 0))
+        print('{} action recognition score : {}'.format(video_name, result))
+        print('{} action recognition result : {}'.format(
+            video_name, 1 if result >= args.action_score_thr else 0))
 
 
 if __name__ == '__main__':
