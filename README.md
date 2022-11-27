@@ -1,8 +1,7 @@
 # Action Recognition
 
-#### It is revealed that this project is based on [Open MMProject](https://github.com/open-mmlab).
-#### This Project's Goal is to Apply Action Recognition with Multi GPU and TensorRT.
-<br></br>
+It is revealed that this project is based on [Open MMProject](https://github.com/open-mmlab).
+<br>This Project's Goal is to Apply Action Recognition with Multi GPU and TensorRT.</br>
 
 ## Configuration
 
@@ -11,17 +10,22 @@ The configuration is as follows
 2. visualization : we offer visualization of confidence score map which is input of posec3d
 3. inference : we offer demo, inference on single gpu, inference on multi gpu with tensorRT and Flask
 <br></br>
-> #### we modify and custom mmaction2, mmpose, mmdetection project's some part about detection target to use the tensorRT and multi gpu.   
+> we modify and custom mmaction2, mmpose, mmdetection project's some part about detection target to use the tensorRT and multi gpu.   
 
 ## Result
 
-#### 1) Visualization of Confidence Map with visualization/get_confmap.py
+1) Visualization of Confidence Map
 <br></br>
-<p align="center"><img src="https://user-images.githubusercontent.com/63839581/187403723-d0e5895d-ce02-47b6-8651-1800b48a9f07.jpg" width=500 height=700></p>
+![1128010132586184](https://user-images.githubusercontent.com/63839581/204144892-5137f335-6807-4e88-b15f-21a2b80acce9.jpg)
 <br></br>
+```
+python visualization/get_confmap.py --det-config [detection model config path] --det-checkpoint [detection model checkpoint path] --pose-config [pose estimation model config path] --pose-checkpoint [pose estimation model checkpoint path] --video_folder [video src path] --video_out_folder [video dst path]
+```
 
-#### 2) Visualization of Demo Video with ./demo.py
+2) Visualization of Demo Video
 <br></br>
-<p align="center"><img src="https://user-images.githubusercontent.com/63839581/187407691-52634b53-960b-4ae0-a6e3-9888bd54e127.gif" width=800 height=500></p>
-<p align="center"><img src="https://user-images.githubusercontent.com/63839581/187407703-087c6474-e5fe-4360-9471-7776a81ca509.gif" width=800 height=500></p>
-<p align="center"><img src="https://user-images.githubusercontent.com/63839581/187407442-f0c493c4-a36e-48ae-bdd7-d4836c4561b1.gif" width=800 height=500></p>
+![ezgif com-gif-maker](https://user-images.githubusercontent.com/63839581/204144338-acbe7ada-2e88-45ca-8f53-fb22a0105611.gif)
+<br></br>
+```
+python demo.py --det-config [detection model config path] --det-checkpoint [detection model checkpoint path] --pose-config [pose estimation model config path] --pose-checkpoint [pose estimation model checkpoint path --skeleton-config [action recognition model config path] --skeleton-checkpoint [action recognition model checkpoint path] --video_folder [video src path] --video_out_folder [video dst path]
+```
