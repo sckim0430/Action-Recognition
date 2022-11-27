@@ -12,6 +12,11 @@ The configuration is as follows
 <br></br>
 > we modify and custom mmaction2, mmpose, mmdetection project's some part about detection target to use the tensorRT and multi gpu.   
 
+## Inference
+```
+python inference_trt_multi.py --det-config [detection model config path] --det-checkpoint [detection model checkpoint path] --det-deploy-config [detection model deploy config path] --pose-config [pose estimation model config path] --pose-checkpoint [pose estimation model checkpoint path --skeleton-config [action recognition model config path] --pose-deploy-config [pose estimation deploy config path] --skeleton-checkpoint [action recognition model checkpoint path] --video_folder [video src path] --det-batch [detection batch size] --pose-batch [pose estimation batch size] --action-batch [action recognition batch size]
+```
+
 ## Result
 
 1) Visualization of Confidence Map
