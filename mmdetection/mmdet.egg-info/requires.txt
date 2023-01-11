@@ -13,6 +13,7 @@ scipy
 sklearn
 timm
 matplotlib
+numpy
 pycocotools
 six
 terminaltables

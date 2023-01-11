@@ -1,7 +1,3 @@
-.gitignore
-.pre-commit-config.yaml
-.pylintrc
-.readthedocs.yml
 CITATION.cff
 LICENSE
 MANIFEST.in
@@ -11,17 +7,6 @@ model-index.yml
 requirements.txt
 setup.cfg
 setup.py
-.github/CODE_OF_CONDUCT.md
-.github/CONTRIBUTING.md
-.github/pull_request_template.md
-.github/ISSUE_TEMPLATE/config.yml
-.github/ISSUE_TEMPLATE/error-report.md
-.github/ISSUE_TEMPLATE/feature_request.md
-.github/ISSUE_TEMPLATE/general_questions.md
-.github/ISSUE_TEMPLATE/reimplementation_questions.md
-.github/workflows/build.yml
-.github/workflows/deploy.yml
-.github/workflows/lint.yml
 configs/_base_/default_runtime.py
 configs/_base_/models/audioonly_r50.py
 configs/_base_/models/bmn_400x100.py
@@ -376,10 +361,6 @@ demo/webcam_demo_spatiotemporal_det.py
 demo/fuse/data_list.txt
 demo/fuse/flow.pkl
 demo/fuse/rgb.pkl
-docker/Dockerfile
-docker/serve/Dockerfile
-docker/serve/config.properties
-docker/serve/entrypoint.sh
 docs/Makefile
 docs/api.rst
 docs/benchmark.md
@@ -900,6 +881,7 @@ mmaction/datasets/ava_dataset.py
 mmaction/datasets/base.py
 mmaction/datasets/blending_utils.py
 mmaction/datasets/builder.py
+mmaction/datasets/custom_image_dataset.py
 mmaction/datasets/dataset_wrappers.py
 mmaction/datasets/hvu_dataset.py
 mmaction/datasets/image_dataset.py
